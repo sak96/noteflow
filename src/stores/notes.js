@@ -22,12 +22,8 @@ export const useNotesStore = defineStore('notes', {
     },
 
     groupedByCategory: (state) => {
-      const filtered = state.filterCategories.length === 0 
-        ? state.notes 
-        : state.notes.filter(n => n.category && state.filterCategories.includes(n.category));
-      
       const groups = {};
-      filtered.forEach(note => {
+      state.notes.forEach(note => {
         const cat = note.category || '';
         if (!groups[cat]) groups[cat] = [];
         groups[cat].push(note);
@@ -37,7 +33,20 @@ export const useNotesStore = defineStore('notes', {
         groups[cat].sort((a, b) => a.order - b.order);
       });
       
-      return groups;
+      const sortedKeys = Object.keys(groups).sort((a, b) => {
+        const aEmpty = a === '';
+        const bEmpty = b === '';
+        if (aEmpty && !bEmpty) return 1;
+        if (!aEmpty && bEmpty) return -1;
+        return a.localeCompare(b);
+      });
+      
+      const sortedGroups = {};
+      sortedKeys.forEach(key => {
+        sortedGroups[key] = groups[key];
+      });
+      
+      return sortedGroups;
     },
 
     getNoteById: (state) => (id) => {

@@ -3,9 +3,9 @@
     <header class="header">
       <h1>Notes</h1>
       <div class="header-actions">
-        <button @click="goToSearch" class="btn">Search</button>
-        <button @click="exportNotes" class="btn">Export</button>
-        <button @click="triggerImport" class="btn">Import</button>
+        <button @click="goToSearch" class="btn">🔍</button>
+        <button @click="exportNotes" class="btn">📤</button>
+        <button @click="triggerImport" class="btn">📥</button>
         <input
           ref="fileInput"
           type="file"
@@ -15,20 +15,6 @@
         />
       </div>
     </header>
-
-    <div class="filter-bar">
-      <label>Filter by category:</label>
-      <div class="category-filters">
-        <label v-for="cat in store.categories" :key="cat" class="checkbox-label">
-          <input
-            type="checkbox"
-            :value="cat"
-            v-model="store.filterCategories"
-          />
-          {{ cat }}
-        </label>
-      </div>
-    </div>
 
     <div class="add-form">
       <div
@@ -47,12 +33,17 @@
       <datalist id="categories">
         <option v-for="cat in store.categories" :key="cat" :value="cat" />
       </datalist>
-      <button @click="addNote" class="btn btn-primary">Add</button>
+      <button @click="addNote" class="btn btn-primary">➕</button>
     </div>
 
     <div class="notes-list">
-      <div v-for="(notes, category) in store.groupedByCategory" :key="category" class="category-group">
-        <h3 class="category-title">{{ category || 'Uncategorized' }}</h3>
+      <details
+        v-for="(notes, category) in store.groupedByCategory"
+        :key="category"
+        class="category-group"
+        open
+      >
+        <summary class="category-title">{{ category || 'Uncategorized' }}</summary>
         <draggable
           :list="notes"
           item-key="id"
@@ -62,19 +53,19 @@
         >
           <template #item="{ element }">
             <div class="note-item" :data-id="element.id">
+              <span class="drag-handle">⋮⋮</span>
               <span
                 contenteditable
                 class="note-title"
                 @blur="updateTitle(element.id, $event)"
                 @keydown.enter.prevent="$event.target.blur()"
               >{{ element.name }}</span>
-              <div class="note-actions">
-                <button @click="goToFile(element.id)" class="btn btn-small">Go</button>
-              </div>
+              <span class="note-category">{{ element.category }}</span>
+              <button @click="goToFile(element.id)" class="btn btn-small">✎</button>
             </div>
           </template>
         </draggable>
-      </div>
+      </details>
     </div>
   </div>
 </template>
@@ -175,27 +166,6 @@ async function exportNotes() {
   gap: 10px;
 }
 
-.filter-bar {
-  margin-bottom: 20px;
-  padding: 10px;
-  background: var(--bg-secondary);
-  border-radius: 4px;
-}
-
-.category-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-}
-
 .add-form {
   display: flex;
   gap: 10px;
@@ -227,7 +197,7 @@ async function exportNotes() {
 }
 
 .category-group {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .category-title {
@@ -235,6 +205,7 @@ async function exportNotes() {
   color: var(--fg-secondary);
   margin-bottom: 8px;
   text-transform: uppercase;
+  cursor: pointer;
 }
 
 .draggable-list {
@@ -245,15 +216,24 @@ async function exportNotes() {
 
 .note-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
   padding: 10px;
   background: var(--bg-secondary);
   border-radius: 4px;
-  cursor: grab;
 }
 
-.note-item:active {
+.drag-handle {
+  cursor: grab;
+  color: var(--fg-secondary);
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.note-item:active .drag-handle {
   cursor: grabbing;
 }
 
@@ -263,8 +243,9 @@ async function exportNotes() {
   min-width: 0;
 }
 
-.note-actions {
-  display: flex;
-  gap: 8px;
+.note-category {
+  color: var(--fg-secondary);
+  font-size: 12px;
+  min-width: 80px;
 }
 </style>
