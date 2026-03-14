@@ -6,6 +6,8 @@
   --border: #dddddd;
   --accent: #0066cc;
   --danger: #cc0000;
+  --text: var(--fg);
+  --hover-bg: var(--bg-secondary);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,6 +19,8 @@
     --border: #444444;
     --accent: #66b3ff;
     --danger: #ff6666;
+    --text: var(--fg);
+    --hover-bg: var(--bg-secondary);
   }
 }
 
