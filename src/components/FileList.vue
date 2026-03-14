@@ -4,8 +4,8 @@
       <h1>Notes</h1>
       <div class="header-actions">
         <button @click="goToSearch" class="btn">🔍</button>
-        <button @click="exportNotes" class="btn">📤</button>
-        <button @click="triggerImport" class="btn">📥</button>
+        <button @click="exportNotes" class="btn">⬇️</button>
+        <button @click="triggerImport" class="btn">⬆️</button>
         <input
           ref="fileInput"
           type="file"
