@@ -19,15 +19,6 @@
       </div>
     </header>
 
-    <div class="toolbar">
-      <button @click="insertFormat('**', '**')" class="toolbar-btn" title="Bold">B</button>
-      <button @click="insertFormat('*', '*')" class="toolbar-btn" title="Italic">I</button>
-      <button @click="insertFormat('## ', '')" class="toolbar-btn" title="Heading">H</button>
-      <button @click="insertFormat('- ', '')" class="toolbar-btn" title="List">•</button>
-      <button @click="insertFormat('[', '](url)')" class="toolbar-btn" title="Link">🔗</button>
-      <button @click="insertFormat('`', '`')" class="toolbar-btn" title="Code">&lt;/&gt;</button>
-    </div>
-
     <div ref="editorContainer" class="editor-container"></div>
 
     <dialog ref="deleteDialog" class="delete-dialog">
@@ -90,6 +81,7 @@ function loadNote() {
   [editor] = new Overtype(editorContainer.value, {
     value: note.value.content || '',
     showCursor: true,
+    toolbar: true,
     onChange: (value, instance) => {
       isDirty.value = true;
     },
@@ -187,30 +179,6 @@ function insertFormat(prefix, suffix) {
 .btn-dirty {
   border-color: var(--accent);
   color: var(--accent);
-}
-
-.toolbar {
-  display: flex;
-  gap: 5px;
-  margin-bottom: 10px;
-  padding: 8px;
-  background: var(--bg-secondary);
-  border-radius: 4px;
-}
-
-.toolbar-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg);
-  color: var(--fg);
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.toolbar-btn:hover {
-  background: var(--bg-secondary);
 }
 
 .editor-container {
