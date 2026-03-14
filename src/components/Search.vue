@@ -24,7 +24,7 @@
       >
         <summary class="result-summary">
           <span class="result-title">{{ result.name }}</span>
-          <button @click.stop="goToFile(result.id)" class="btn btn-small">✎</button>
+          <button @click.stop="goToFile(result.id)" class="btn btn-small">✏️</button>
         </summary>
         <div class="result-content" v-html="getHighlightedContent(result)"></div>
       </details>

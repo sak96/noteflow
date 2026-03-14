@@ -46,24 +46,22 @@
         <summary class="category-title">{{ category || 'Uncategorized' }}</summary>
         <draggable
           :list="notes"
-          item-key="id"
-          group="notes"
+          handle=".drag-handle"
           @end="onDragEnd"
           class="draggable-list"
         >
-          <template #item="{ element }">
-            <div class="note-item" :data-id="element.id">
-              <span class="drag-handle">⋮⋮</span>
-              <span
-                contenteditable
-                class="note-title"
-                @blur="updateTitle(element.id, $event)"
-                @keydown.enter.prevent="$event.target.blur()"
-              >{{ element.name }}</span>
-              <span class="note-category">{{ element.category }}</span>
-              <button @click="goToFile(element.id)" class="btn btn-small">✎</button>
-            </div>
-          </template>
+          <div v-for="element in notes" :key="element.id">
+              <div class="note-item" :data-id="element.id">
+                <span class="drag-handle">⠿</span>
+                <span
+                  contenteditable
+                  class="note-title"
+                  @blur="updateTitle(element.id, $event)"
+                  @keydown.enter.prevent="$event.target.blur()"
+                >{{ element.name }}</span>
+                <button @click="goToFile(element.id)" class="btn btn-small">✏️</button>
+              </div>
+          </div>
         </draggable>
       </details>
     </div>
@@ -72,7 +70,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { VueDraggableNext as Draggable } from 'vue-draggable-next';
+import { VueDraggableNext as draggable } from 'vue-draggable-next';
 import { useNotesStore } from '../stores/notes.js';
 import { useRouter } from '../router.js';
 
@@ -241,11 +239,5 @@ async function exportNotes() {
   flex: 1;
   outline: none;
   min-width: 0;
-}
-
-.note-category {
-  color: var(--fg-secondary);
-  font-size: 12px;
-  min-width: 80px;
 }
 </style>
