@@ -240,4 +240,10 @@ async function exportNotes() {
   outline: none;
   min-width: 0;
 }
+
+.note-item .btn-small {
+  border: none;
+  padding: 4px;
+  background: transparent;
+}
 </style>
