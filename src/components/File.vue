@@ -87,19 +87,18 @@ function loadNote() {
     editor.destroy();
   }
   
-  editor = new Overtype(editorContainer.value, {
-    initialContent: note.value.content || '',
+  [editor] = new Overtype(editorContainer.value, {
+    value: note.value.content || '',
     showCursor: true,
+    onChange: (value, instance) => {
+      isDirty.value = true;
+    },
     style: {
       fontFamily: 'monospace',
       fontSize: '14px',
       lineHeight: '1.6',
       tabSize: 2,
     },
-  });
-  
-  editor.on('change', () => {
-    isDirty.value = true;
   });
   
   isDirty.value = false;
@@ -118,7 +117,7 @@ async function updateTitle() {
 }
 
 async function saveNote() {
-  const content = editor.getContent();
+  const content = editor.getValue();
   await store.saveNote(props.id, { content });
   isDirty.value = false;
 }
