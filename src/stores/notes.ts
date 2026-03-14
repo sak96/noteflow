@@ -1,9 +1,19 @@
 import { defineStore } from 'pinia';
-import { getAllNotes, addNote, updateNote, deleteNote, bulkImport, getAllCategories, generateId } from '../utils/db.js';
-import { rebuildSearchIndex, search } from '../utils/search.js';
+import { getAllNotes, addNote, updateNote, deleteNote, bulkImport, getAllCategories, generateId } from '../utils/db';
+import type { Note, NoteUpdate } from '../utils/db';
+import { rebuildSearchIndex, search } from '../utils/search';
+import type { SearchResult } from '../types/index';
+
+interface NotesState {
+  notes: Note[];
+  categories: string[];
+  filterCategories: string[];
+  searchQuery: string;
+  isLoading: boolean;
+}
 
 export const useNotesStore = defineStore('notes', {
-  state: () => ({
+  state: (): NotesState => ({
     notes: [],
     categories: [],
     filterCategories: [],
@@ -12,7 +22,7 @@ export const useNotesStore = defineStore('notes', {
   }),
 
   getters: {
-    filteredNotes: (state) => {
+    filteredNotes: (state: NotesState): Note[] => {
       if (state.filterCategories.length === 0) {
         return state.notes;
       }
@@ -21,8 +31,8 @@ export const useNotesStore = defineStore('notes', {
       );
     },
 
-    groupedByCategory: (state) => {
-      const groups = {};
+    groupedByCategory: (state: NotesState): Record<string, Note[]> => {
+      const groups: Record<string, Note[]> = {};
       state.notes.forEach(note => {
         const rawCat = note.category || '';
         const catKey = rawCat.toLowerCase();
@@ -42,7 +52,7 @@ export const useNotesStore = defineStore('notes', {
         return a.localeCompare(b);
       });
       
-      const sortedGroups = {};
+      const sortedGroups: Record<string, Note[]> = {};
       sortedKeys.forEach(key => {
         const displayName = key ? key.charAt(0).toUpperCase() + key.slice(1) : '';
         sortedGroups[displayName] = groups[key];
@@ -51,13 +61,13 @@ export const useNotesStore = defineStore('notes', {
       return sortedGroups;
     },
 
-    getNoteById: (state) => (id) => {
+    getNoteById: (state: NotesState) => (id: string): Note | undefined => {
       return state.notes.find(n => n.id === id);
     },
   },
 
   actions: {
-    async loadNotes() {
+    async loadNotes(): Promise<void> {
       this.isLoading = true;
       try {
         this.notes = await getAllNotes();
@@ -69,13 +79,13 @@ export const useNotesStore = defineStore('notes', {
       }
     },
 
-    async createNote(name = 'Untitled', category = '') {
+    async createNote(name = 'Untitled', category = ''): Promise<string> {
       const maxOrder = this.notes.length > 0 
         ? Math.max(...this.notes.map(n => n.order)) + 1 
         : 0;
       
       const now = Date.now();
-      const note = {
+      const note: Note = {
         id: generateId(),
         name,
         category,
@@ -90,33 +100,33 @@ export const useNotesStore = defineStore('notes', {
       return note.id;
     },
 
-    async saveNote(id, updates) {
+    async saveNote(id: string, updates: NoteUpdate): Promise<void> {
       await updateNote(id, updates);
       await this.loadNotes();
     },
 
-    async deleteNote(id) {
+    async deleteNote(id: string): Promise<void> {
       await deleteNote(id);
       await this.loadNotes();
     },
 
-    async importNotes(notes) {
+    async importNotes(notes: Note[]): Promise<void> {
       await bulkImport(notes);
       await this.loadNotes();
     },
 
-    async exportNotes() {
+    async exportNotes(): Promise<string> {
       return JSON.stringify(this.notes, null, 2);
     },
 
-    async updateNoteOrders(orderedNotes) {
+    async updateNoteOrders(orderedNotes: Note[]): Promise<void> {
       for (let i = 0; i < orderedNotes.length; i++) {
         await updateNote(orderedNotes[i].id, { order: i });
       }
       await this.loadNotes();
     },
 
-    performSearch(query) {
+    performSearch(query: string): SearchResult[] {
       return search(query);
     },
   },

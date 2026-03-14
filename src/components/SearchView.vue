@@ -32,16 +32,22 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useNotesStore } from '../stores/notes.js';
-import { useRouter } from '../router.js';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useNotesStore } from '../stores/notes';
+import { useRouter } from '../router';
+import type { Note } from '../types/index';
+
+interface SearchResultItem extends Note {
+  id: string;
+  name: string;
+}
 
 const store = useNotesStore();
 const router = useRouter();
 
 const query = ref('');
-const results = ref([]);
+const results = ref<SearchResultItem[]>([]);
 
 onMounted(async () => {
   await store.loadNotes();
@@ -56,7 +62,7 @@ function performSearch() {
   const searchResults = store.performSearch(query.value);
   results.value = searchResults.map(r => {
     const note = store.getNoteById(r.id);
-    return note || { id: r.id, name: r.name, content: '' };
+    return note || { id: r.id, name: r.name, category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 };
   });
 }
 
@@ -64,11 +70,11 @@ function goHome() {
   router.navigate('/');
 }
 
-function goToFile(id) {
+function goToFile(id: string) {
   router.navigate(`/file/${id}`);
 }
 
-function getHighlightedContent(result) {
+function getHighlightedContent(result: SearchResultItem) {
   const note = store.getNoteById(result.id);
   if (!note || !note.content) return '';
   
@@ -98,14 +104,14 @@ function getHighlightedContent(result) {
   );
 }
 
-function escapeHtml(text) {
+function escapeHtml(text: string) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-function escapeRegex(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function escapeRegex(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 </script>
 

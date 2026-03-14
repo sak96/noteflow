@@ -57,7 +57,7 @@
                   contenteditable
                   class="note-title"
                   @blur="updateTitle(element.id, $event)"
-                  @keydown.enter.prevent="$event.target.blur()"
+                  @keydown.enter.prevent="blurTarget"
                 >{{ element.name }}</span>
                 <button @click="goToFile(element.id)" class="btn btn-small">✏️</button>
               </div>
@@ -68,18 +68,19 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { VueDraggableNext as draggable } from 'vue-draggable-next';
-import { useNotesStore } from '../stores/notes.js';
-import { useRouter } from '../router.js';
+import { useNotesStore } from '../stores/notes';
+import { useRouter } from '../router';
+import type { Note } from '../types/index';
 
 const store = useNotesStore();
 const router = useRouter();
 
-const newTitle = ref(null);
+const newTitle = ref<HTMLElement | null>(null);
 const newCategory = ref('');
-const fileInput = ref(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 onMounted(async () => {
   await store.loadNotes();
@@ -89,28 +90,29 @@ function goToSearch() {
   router.navigate('/search');
 }
 
-function goToFile(id) {
+function goToFile(id: string) {
   router.navigate(`/file/${id}`);
 }
 
 async function addNote() {
-  const title = newTitle.value.innerText.trim() || 'Untitled';
+  const title = newTitle.value?.innerText?.trim() || 'Untitled';
   const category = newCategory.value.trim();
   const id = await store.createNote(title, category);
-  newTitle.value.innerText = '';
+  if (newTitle.value) newTitle.value.innerText = '';
   newCategory.value = '';
   router.navigate(`/file/${id}`);
 }
 
-async function updateTitle(id, event) {
-  const newName = event.target.innerText.trim();
+async function updateTitle(id: string, event: FocusEvent) {
+  const target = event.target as HTMLElement;
+  const newName = target.innerText.trim();
   if (newName) {
     await store.saveNote(id, { name: newName });
   }
 }
 
 async function onDragEnd() {
-  const orderedNotes = [];
+  const orderedNotes: Note[] = [];
   Object.values(store.groupedByCategory).forEach(notes => {
     notes.forEach(n => orderedNotes.push(n));
   });
@@ -118,11 +120,12 @@ async function onDragEnd() {
 }
 
 function triggerImport() {
-  fileInput.value.click();
+  fileInput.value?.click();
 }
 
-async function importNotes(event) {
-  const file = event.target.files[0];
+async function importNotes(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
   if (!file) return;
   
   if (confirm('This will overwrite all existing notes. Continue?')) {
@@ -130,7 +133,7 @@ async function importNotes(event) {
     const notes = JSON.parse(text);
     await store.importNotes(notes);
   }
-  event.target.value = '';
+  target.value = '';
 }
 
 async function exportNotes() {
@@ -142,6 +145,10 @@ async function exportNotes() {
   a.download = 'notes.json';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function blurTarget(event: KeyboardEvent) {
+  (event.target as HTMLElement)?.blur();
 }
 </script>
 

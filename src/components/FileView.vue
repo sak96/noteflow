@@ -7,7 +7,7 @@
         ref="titleEl"
         class="title-input"
         @blur="updateTitle"
-        @keydown.enter.prevent="$event.target.blur()"
+        @keydown.enter.prevent="blurTarget"
       >{{ note?.name }}</div>
       <div class="header-actions">
         <button 
@@ -24,33 +24,34 @@
     <dialog ref="deleteDialog" class="delete-dialog">
       <p>Delete this note?</p>
       <div class="dialog-actions">
-        <button @click="deleteDialog.close()" class="btn">Cancel</button>
+        <button @click="closeDeleteDialog" class="btn">Cancel</button>
         <button @click="deleteNote" class="btn btn-danger">Delete</button>
       </div>
     </dialog>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import Overtype from 'overtype';
-import { useNotesStore } from '../stores/notes.js';
-import { useRouter } from '../router.js';
+import { useNotesStore } from '../stores/notes';
+import { useRouter } from '../router';
+import type { Note } from '../types/index';
 
-const props = defineProps({
-  id: { type: String, required: true },
-});
+const props = defineProps<{
+  id: string;
+}>();
 
 const store = useNotesStore();
 const router = useRouter();
 
-const note = ref(null);
-const titleEl = ref(null);
-const editorContainer = ref(null);
-const deleteDialog = ref(null);
+const note = ref<Note | null>(null);
+const titleEl = ref<HTMLElement | null>(null);
+const editorContainer = ref<HTMLElement | null>(null);
+const deleteDialog = ref<HTMLDialogElement | null>(null);
 const isDirty = ref(false);
 
-let editor = null;
+let editor: InstanceType<typeof Overtype> | null = null;
 
 function getEditorTheme() {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -63,8 +64,8 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  if (editor) {
-    editor.destroy();
+  if (editor && editor.length > 0) {
+    editor[0].destroy();
   }
 });
 
@@ -73,26 +74,29 @@ watch(() => props.id, () => {
 });
 
 function loadNote() {
-  note.value = store.getNoteById(props.id);
+  note.value = store.getNoteById(props.id) || null;
   if (!note.value) {
     router.navigate('/');
     return;
   }
   
-  if (editor) {
-    editor.destroy();
+  if (editor && editor.length > 0) {
+    editor[0].destroy();
   }
   
-  [editor] = new Overtype(editorContainer.value, {
-    value: note.value.content || '',
-    toolbar: true,
-    theme: getEditorTheme(),
-    onChange: (value, instance) => {
-      isDirty.value = true;
-    },
-    spellcheck: true,
-    showStats: true,
-  });
+  if (editorContainer.value) {
+    const instances = new Overtype(editorContainer.value, {
+      value: note.value.content || '',
+      toolbar: true,
+      theme: getEditorTheme(),
+      onChange: () => {
+        isDirty.value = true;
+      },
+      spellcheck: true,
+      showStats: true,
+    });
+    editor = instances;
+  }
   
   isDirty.value = false;
 }
@@ -102,41 +106,35 @@ function goHome() {
 }
 
 async function updateTitle() {
-  const newName = titleEl.value.innerText.trim();
-  if (newName && newName !== note.value.name) {
+  const newName = titleEl.value?.innerText?.trim();
+  if (newName && note.value && newName !== note.value.name) {
     await store.saveNote(props.id, { name: newName });
     note.value.name = newName;
   }
 }
 
 async function saveNote() {
-  const content = editor.getValue();
+  const content = editor?.[0]?.getValue() || '';
   await store.saveNote(props.id, { content });
   isDirty.value = false;
 }
 
 function confirmDelete() {
-  deleteDialog.value.showModal();
+  deleteDialog.value?.showModal();
 }
 
 async function deleteNote() {
-  deleteDialog.value.close();
+  deleteDialog.value?.close();
   await store.deleteNote(props.id);
   router.navigate('/');
 }
 
-function insertFormat(prefix, suffix) {
-  if (!editor) return;
-  
-  const selection = editor.state.selection;
-  const selectedText = selection ? editor.getTextInRange(selection.start, selection.end) : '';
-  
-  if (selectedText) {
-    editor.insertText(prefix + selectedText + suffix);
-  } else {
-    editor.insertText(prefix + suffix);
-    editor.setSelection(editor.state.selection.start - suffix.length, editor.state.selection.start - suffix.length);
-  }
+function blurTarget(event: KeyboardEvent) {
+  (event.target as HTMLElement)?.blur();
+}
+
+function closeDeleteDialog() {
+  deleteDialog.value?.close();
 }
 </script>
 
