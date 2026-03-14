@@ -2,14 +2,26 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useNotesStore } from '../stores/notes.js';
 
+let mockNotes = [];
+
 vi.mock('../utils/db.js', () => ({
-  getAllNotes: vi.fn(),
-  addNote: vi.fn(),
+  getAllNotes: vi.fn(() => Promise.resolve([...mockNotes])),
+  addNote: vi.fn((note) => {
+    mockNotes.push(note);
+    return Promise.resolve();
+  }),
   updateNote: vi.fn(),
   deleteNote: vi.fn(),
-  bulkImport: vi.fn(),
-  getAllCategories: vi.fn(),
+  bulkImport: vi.fn((notes) => {
+    mockNotes = [...notes];
+    return Promise.resolve();
+  }),
+  getAllCategories: vi.fn(() => {
+    const categories = new Set(mockNotes.map(n => n.category).filter(c => c));
+    return Promise.resolve(Array.from(categories).sort());
+  }),
   generateId: vi.fn(() => 'test-id-123'),
+  rebuildSearchIndex: vi.fn(),
 }));
 
 vi.mock('../utils/search.js', () => ({
@@ -30,6 +42,7 @@ describe('notes store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    mockNotes = [];
   });
 
   describe('groupedByCategory', () => {
@@ -205,6 +218,27 @@ describe('notes store', () => {
         })
       );
       expect(id).toBe('test-id-123');
+    });
+
+    it('createNote adds note to store and shows in groupedByCategory', async () => {
+      const store = useNotesStore();
+      
+      getAllNotes.mockImplementation(() => Promise.resolve([...mockNotes]));
+      getAllCategories.mockImplementation(() => Promise.resolve(['Work']));
+      
+      const noteId = await store.createNote('Test Note', 'Work');
+      
+      expect(store.notes.length).toBe(1);
+      expect(store.notes[0].name).toBe('Test Note');
+      expect(store.notes[0].category).toBe('Work');
+      
+      const noteInStore = store.getNoteById(noteId);
+      expect(noteInStore).toBeDefined();
+      expect(noteInStore.name).toBe('Test Note');
+      
+      const grouped = store.groupedByCategory;
+      expect(grouped['Work']).toBeDefined();
+      expect(grouped['Work'][0].name).toBe('Test Note');
     });
 
     it('saveNote calls updateNote', async () => {
