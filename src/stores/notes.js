@@ -24,13 +24,14 @@ export const useNotesStore = defineStore('notes', {
     groupedByCategory: (state) => {
       const groups = {};
       state.notes.forEach(note => {
-        const cat = note.category || '';
-        if (!groups[cat]) groups[cat] = [];
-        groups[cat].push(note);
+        const rawCat = note.category || '';
+        const catKey = rawCat.toLowerCase();
+        if (!groups[catKey]) groups[catKey] = [];
+        groups[catKey].push(note);
       });
       
-      Object.keys(groups).forEach(cat => {
-        groups[cat].sort((a, b) => a.order - b.order);
+      Object.keys(groups).forEach(catKey => {
+        groups[catKey].sort((a, b) => a.order - b.order);
       });
       
       const sortedKeys = Object.keys(groups).sort((a, b) => {
@@ -43,7 +44,8 @@ export const useNotesStore = defineStore('notes', {
       
       const sortedGroups = {};
       sortedKeys.forEach(key => {
-        sortedGroups[key] = groups[key];
+        const displayName = key ? key.charAt(0).toUpperCase() + key.slice(1) : '';
+        sortedGroups[displayName] = groups[key];
       });
       
       return sortedGroups;
