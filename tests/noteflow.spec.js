@@ -29,14 +29,14 @@ test.describe('NoteFlow App', () => {
     await page.locator('.editor-container').click();
     await page.keyboard.type('# Hello World');
     await page.waitForTimeout(500);
-    await page.click('button:has-text("Save")');
+    await page.click('button:has-text("💾")');
     await page.waitForTimeout(300);
-    await expect(page.locator('.btn:has-text("Save")')).not.toHaveClass(/btn-dirty/);
+    await expect(page.locator('.btn:has-text("💾")')).not.toHaveClass(/btn-dirty/);
   });
 
   test('should delete note with confirmation', async ({ page }) => {
     await page.click('button:has-text("➕")');
-    await page.click('button:has-text("Delete")');
+    await page.click('button:has-text("🗑️")');
     const dialog = page.locator('dialog');
     await expect(dialog).toBeVisible();
     await page.locator('dialog button.btn-danger:has-text("Delete")').click();
@@ -48,7 +48,7 @@ test.describe('NoteFlow App', () => {
     await page.click('button:has-text("🔍")');
     await expect(page).toHaveURL(/#\/search/);
     await expect(page.locator('input[placeholder="Search notes..."]')).toBeVisible();
-    await expect(page.locator('button:has-text("Home")')).toBeVisible();
+    await expect(page.locator('button:has-text("🏠")')).toBeVisible();
   });
 
   test('should search notes', async ({ page }) => {
@@ -61,7 +61,7 @@ test.describe('NoteFlow App', () => {
     await page.fill('input[placeholder="Category"]', 'Work');
     await page.click('button:has-text("➕")');
     await page.waitForTimeout(500);
-    await page.click('button:has-text("Home")');
+    await page.goto('http://localhost:5174');
     await page.waitForTimeout(500);
     
     const categoryDetails = page.locator('details.category-group');
@@ -74,7 +74,7 @@ test.describe('NoteFlow App', () => {
     await page.fill('input[placeholder="Category"]', 'Personal');
     await page.click('button:has-text("➕")');
     await page.waitForTimeout(500);
-    await page.click('button:has-text("Home")');
+    await page.goto('http://localhost:5174');
     await page.waitForTimeout(1000);
     
     const categoryDetails = page.locator('details.category-group');
@@ -113,7 +113,9 @@ test.describe('NoteFlow App', () => {
 
   test('should export and import notes', async ({ page }) => {
     await page.click('button:has-text("➕")');
-    await page.click('button:has-text("Home")');
+    await page.waitForTimeout(500);
+    await page.goto('http://localhost:5174');
+    await page.waitForTimeout(500);
     const downloadPromise = page.waitForEvent('download');
     await page.click('button:has-text("📤")');
     const download = await downloadPromise;

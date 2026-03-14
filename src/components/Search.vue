@@ -1,7 +1,7 @@
 <template>
   <div class="search-view">
     <header class="header">
-      <button @click="goHome" class="btn">Home</button>
+      <button @click="goHome" class="btn">🏠</button>
       <input
         v-model="query"
         type="text"
@@ -24,7 +24,7 @@
       >
         <summary class="result-summary">
           <span class="result-title">{{ result.name }}</span>
-          <button @click.stop="goToFile(result.id)" class="btn btn-small">Go</button>
+          <button @click.stop="goToFile(result.id)" class="btn btn-small">✎</button>
         </summary>
         <div class="result-content" v-html="getHighlightedContent(result)"></div>
       </details>

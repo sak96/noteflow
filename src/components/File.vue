@@ -1,7 +1,7 @@
 <template>
   <div class="file-view">
     <header class="header">
-      <button @click="goHome" class="btn">Home</button>
+      <button @click="goHome" class="btn">🏠</button>
       <div
         contenteditable
         ref="titleEl"
@@ -14,8 +14,8 @@
           @click="saveNote" 
           class="btn"
           :class="{ 'btn-dirty': isDirty }"
-        >Save</button>
-        <button @click="confirmDelete" class="btn btn-danger">Delete</button>
+        >💾</button>
+        <button @click="confirmDelete" class="btn btn-danger">🗑️</button>
       </div>
     </header>
 
@@ -51,6 +51,11 @@ const deleteDialog = ref(null);
 const isDirty = ref(false);
 
 let editor = null;
+
+function getEditorTheme() {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return prefersDark ? 'cave' : 'solar';
+}
 
 onMounted(async () => {
   await store.loadNotes();
@@ -185,7 +190,6 @@ function insertFormat(prefix, suffix) {
   flex: 1;
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 15px;
   overflow: auto;
   background: var(--bg);
 }
