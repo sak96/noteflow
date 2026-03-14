@@ -85,17 +85,13 @@ function loadNote() {
   
   [editor] = new Overtype(editorContainer.value, {
     value: note.value.content || '',
-    showCursor: true,
     toolbar: true,
+    theme: getEditorTheme(),
     onChange: (value, instance) => {
       isDirty.value = true;
     },
-    style: {
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      lineHeight: '1.6',
-      tabSize: 2,
-    },
+    spellcheck: true,
+    showStats: true,
   });
   
   isDirty.value = false;
