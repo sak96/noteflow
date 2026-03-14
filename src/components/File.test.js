@@ -1,0 +1,80 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
+
+class MockEditorInstance {
+  constructor() {
+    this.state = { selection: null };
+  }
+  getValue() { return 'content'; }
+  setValue() {}
+  destroy() {}
+  insertText() {}
+  setSelection() {}
+}
+
+const MockEditor = function() {
+  return [new MockEditorInstance()];
+};
+
+vi.mock('overtype', () => ({
+  default: MockEditor,
+}));
+
+vi.mock('../stores/notes.js', () => ({
+  useNotesStore: () => ({
+    loadNotes: vi.fn().mockResolvedValue(undefined),
+    getNoteById: vi.fn().mockReturnValue({ id: '1', name: 'Note 1', content: '' }),
+    saveNote: vi.fn().mockResolvedValue(undefined),
+    deleteNote: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+vi.mock('../router.js', () => ({
+  useRouter: () => ({
+    navigate: vi.fn(),
+  }),
+}));
+
+describe('File component', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    vi.clearAllMocks();
+    vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false })));
+  });
+
+  it('renders without crashing', async () => {
+    const File = (await import('../components/File.vue')).default;
+    const wrapper = mount(File, { props: { id: '1' } });
+    expect(wrapper.exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('has header section', async () => {
+    const File = (await import('../components/File.vue')).default;
+    const wrapper = mount(File, { props: { id: '1' } });
+    expect(wrapper.find('.header').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('has editor container', async () => {
+    const File = (await import('../components/File.vue')).default;
+    const wrapper = mount(File, { props: { id: '1' } });
+    expect(wrapper.find('.editor-container').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('has title input', async () => {
+    const File = (await import('../components/File.vue')).default;
+    const wrapper = mount(File, { props: { id: '1' } });
+    expect(wrapper.find('.title-input').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('has delete dialog', async () => {
+    const File = (await import('../components/File.vue')).default;
+    const wrapper = mount(File, { props: { id: '1' } });
+    expect(wrapper.find('dialog').exists()).toBe(true);
+    wrapper.unmount();
+  });
+});
