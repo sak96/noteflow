@@ -1,23 +1,24 @@
 import pluginVue from 'eslint-plugin-vue';
 import vueParser from 'vue-eslint-parser';
 import parserTs from '@typescript-eslint/parser';
+import type { Linter } from 'eslint';
 
 export default [
   {
     files: ['src/**/*.vue'],
     ignores: ['node_modules', 'dist', '.git'],
     languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
+      ecmaVersion: 'latest' as const,
+      sourceType: 'module' as const,
       parser: vueParser,
       parserOptions: {
         parser: parserTs
       },
       globals: {
-        console: 'readonly',
-        window: 'readonly',
-        document: 'readonly',
-        fetch: 'readonly'
+        console: 'readonly' as const,
+        window: 'readonly' as const,
+        document: 'readonly' as const,
+        fetch: 'readonly' as const
       }
     },
     plugins: {
@@ -36,21 +37,21 @@ export default [
     files: ['src/**/*.ts'],
     ignores: ['node_modules', 'dist', '.git'],
     languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
+      ecmaVersion: 'latest' as const,
+      sourceType: 'module' as const,
       parser: parserTs,
       globals: {
-        console: 'readonly',
-        window: 'readonly',
-        document: 'readonly',
-        fetch: 'readonly',
-        vi: 'readonly',
-        describe: 'readonly',
-        it: 'readonly',
-        beforeEach: 'readonly',
-        afterEach: 'readonly',
-        MockInstance: 'readonly',
-        Mock: 'readonly'
+        console: 'readonly' as const,
+        window: 'readonly' as const,
+        document: 'readonly' as const,
+        fetch: 'readonly' as const,
+        vi: 'readonly' as const,
+        describe: 'readonly' as const,
+        it: 'readonly' as const,
+        beforeEach: 'readonly' as const,
+        afterEach: 'readonly' as const,
+        MockInstance: 'readonly' as const,
+        Mock: 'readonly' as const
       }
     },
     rules: {
@@ -58,4 +59,4 @@ export default [
       'no-undef': 'off'
     }
   }
-];
+] satisfies Linter.Config[];
