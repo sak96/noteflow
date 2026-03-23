@@ -23,7 +23,7 @@ let dbPromise: Promise<IDBPDatabase<NoteflowDB>> | null = null;
 export async function initDB(): Promise<IDBPDatabase<NoteflowDB>> {
   if (!dbPromise) {
     dbPromise = openDB<NoteflowDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion, newVersion) {
+      upgrade(db) {
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
           store.createIndex('category', 'category');

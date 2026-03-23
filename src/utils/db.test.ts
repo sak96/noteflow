@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { Note } from '../types/index.js';
 
 let mockDbVersion = 1;
 
@@ -56,14 +57,28 @@ import {
   generateId,
 } from '../utils/db.js';
 
+type MockDB = ReturnType<typeof vi.fn> & {
+  getAll: ReturnType<typeof vi.fn>;
+  get: ReturnType<typeof vi.fn>;
+  add: ReturnType<typeof vi.fn>;
+  put: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
+  clear: ReturnType<typeof vi.fn>;
+};
+
+type MockStore = ReturnType<typeof vi.fn> & {
+  put: ReturnType<typeof vi.fn>;
+  clear: ReturnType<typeof vi.fn>;
+};
+
 describe('db utility', () => {
-  let mockDB;
-  let mockStore;
+  let mockDB: MockDB;
+  let mockStore: MockStore;
   
   beforeEach(async () => {
-    const { __mockDB, __mockStore } = await import('idb');
-    mockDB = __mockDB;
-    mockStore = __mockStore;
+    const idb = await import('idb');
+    mockDB = (idb as unknown as { __mockDB: MockDB }).__mockDB;
+    mockStore = (idb as unknown as { __mockStore: MockStore }).__mockStore;
     vi.clearAllMocks();
   });
 
@@ -79,7 +94,7 @@ describe('db utility', () => {
 
   describe('getAllNotes', () => {
     it('returns all notes from store', async () => {
-      const notes = [{ id: '1', name: 'Note 1' }];
+      const notes: Note[] = [{ id: '1', name: 'Note 1', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 }];
       mockDB.getAll.mockResolvedValue(notes);
       
       const result = await getAllNotes();
@@ -90,7 +105,7 @@ describe('db utility', () => {
 
   describe('getNoteById', () => {
     it('returns note by id', async () => {
-      const note = { id: '1', name: 'Note 1' };
+      const note: Note = { id: '1', name: 'Note 1', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 };
       mockDB.get.mockResolvedValue(note);
       
       const result = await getNoteById('1');
@@ -101,7 +116,7 @@ describe('db utility', () => {
 
   describe('addNote', () => {
     it('adds note to store', async () => {
-      const note = { id: '1', name: 'Note 1' };
+      const note: Note = { id: '1', name: 'Note 1', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 };
       
       await addNote(note);
       
@@ -111,8 +126,7 @@ describe('db utility', () => {
 
   describe('updateNote', () => {
     it('updates existing note', async () => {
-      const existing = { id: '1', name: 'Old', content: '' };
-      const updated = { id: '1', name: 'New', content: '', updatedAt: Date.now() };
+      const existing = { id: '1', name: 'Old', content: '', category: '', order: 0, createdAt: 0, updatedAt: 0 };
       mockDB.get.mockResolvedValue(existing);
       
       await updateNote('1', { name: 'New' });
@@ -150,9 +164,9 @@ describe('db utility', () => {
 
   describe('bulkImport', () => {
     it('clears and imports all notes', async () => {
-      const notes = [
-        { id: '1', name: 'Note 1' },
-        { id: '2', name: 'Note 2' },
+      const notes: Note[] = [
+        { id: '1', name: 'Note 1', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
       ];
       
       await bulkImport(notes);
@@ -163,12 +177,12 @@ describe('db utility', () => {
 
   describe('getAllCategories', () => {
     it('returns unique sorted categories', async () => {
-      const notes = [
-        { id: '1', category: 'work' },
-        { id: '2', category: 'personal' },
-        { id: '3', category: 'work' },
-        { id: '4', category: '' },
-        { id: '5', category: null },
+      const notes: Note[] = [
+        { id: '1', category: 'work', name: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', category: 'personal', name: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '3', category: 'work', name: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '4', category: '', name: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '5', category: '', name: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
       ];
       mockDB.getAll.mockResolvedValue(notes);
       
@@ -205,17 +219,17 @@ describe('db utility', () => {
   });
 
   describe('migrateToV2', () => {
-    let mockDB;
-    let mockStore;
+    let mockDB: MockDB;
+    let mockStore: MockStore;
 
     beforeEach(async () => {
-      const { __mockDB, __mockStore } = await import('idb');
-      mockDB = __mockDB;
-      mockStore = __mockStore;
+      const idb = await import('idb');
+      mockDB = (idb as unknown as { __mockDB: MockDB }).__mockDB;
+      mockStore = (idb as unknown as { __mockStore: MockStore }).__mockStore;
       vi.clearAllMocks();
     });
 
-    const createOldNote = (id: string, name: string, category: string, order: number) => ({
+    const createOldNote = (id: string, name: string, category: string, order: number): Note => ({
       id,
       name,
       category,
@@ -227,7 +241,7 @@ describe('db utility', () => {
 
     it('creates dividers for each category in ascending order', async () => {
       mockDbVersion = 1;
-      const oldNotes = [
+      const oldNotes: Note[] = [
         createOldNote('1', 'Note 1', 'work', 0),
         createOldNote('2', 'Note 2', 'personal', 1),
         createOldNote('3', 'Note 3', 'work', 2),
@@ -236,7 +250,7 @@ describe('db utility', () => {
 
       await initDB();
 
-      const allPuts = mockStore.put.mock.calls.map(call => call[0]);
+      const allPuts = mockStore.put.mock.calls.map((call: unknown[]) => call[0] as Note);
       const dividers = allPuts.filter(n => n.content === null);
       const notes = allPuts.filter(n => n.content !== null);
 
@@ -252,7 +266,7 @@ describe('db utility', () => {
 
     it('creates Uncategorized divider first when uncategorized notes exist', async () => {
       mockDbVersion = 1;
-      const oldNotes = [
+      const oldNotes: Note[] = [
         createOldNote('1', 'Note 1', '', 0),
         createOldNote('2', 'Note 2', 'work', 1),
       ];
@@ -260,7 +274,7 @@ describe('db utility', () => {
 
       await initDB();
 
-      const allPuts = mockStore.put.mock.calls.map(call => call[0]);
+      const allPuts = mockStore.put.mock.calls.map((call: unknown[]) => call[0] as Note);
       const dividers = allPuts.filter(n => n.content === null);
 
       expect(dividers).toHaveLength(2);
@@ -270,7 +284,7 @@ describe('db utility', () => {
 
     it('preserves note order within category by original order then insertion', async () => {
       mockDbVersion = 1;
-      const oldNotes = [
+      const oldNotes: Note[] = [
         createOldNote('1', 'Note A', 'work', 5),
         createOldNote('2', 'Note B', 'work', 2),
         createOldNote('3', 'Note C', 'work', 2),
@@ -279,7 +293,7 @@ describe('db utility', () => {
 
       await initDB();
 
-      const allPuts = mockStore.put.mock.calls.map(call => call[0]);
+      const allPuts = mockStore.put.mock.calls.map((call: unknown[]) => call[0] as Note);
       const workNotes = allPuts.filter(n => n.category === 'work');
 
       expect(workNotes[0].name).toBe('Note B');
@@ -289,7 +303,7 @@ describe('db utility', () => {
 
     it('assigns sequential order starting from 0', async () => {
       mockDbVersion = 1;
-      const oldNotes = [
+      const oldNotes: Note[] = [
         createOldNote('1', 'Note 1', 'work', 100),
         createOldNote('2', 'Note 2', 'personal', 200),
       ];
@@ -297,7 +311,7 @@ describe('db utility', () => {
 
       await initDB();
 
-      const allPuts = mockStore.put.mock.calls.map(call => call[0]);
+      const allPuts = mockStore.put.mock.calls.map((call: unknown[]) => call[0] as Note);
       allPuts.sort((a, b) => a.order - b.order);
 
       expect(allPuts[0].order).toBe(0);
@@ -312,7 +326,7 @@ describe('db utility', () => {
 
     it('preserves original category on notes', async () => {
       mockDbVersion = 1;
-      const oldNotes = [
+      const oldNotes: Note[] = [
         createOldNote('1', 'Note 1', 'work', 0),
         createOldNote('2', 'Note 2', 'personal', 1),
       ];
@@ -320,7 +334,7 @@ describe('db utility', () => {
 
       await initDB();
 
-      const allPuts = mockStore.put.mock.calls.map(call => call[0]);
+      const allPuts = mockStore.put.mock.calls.map((call: unknown[]) => call[0] as Note);
       const notes = allPuts.filter(n => n.content !== null);
 
       expect(notes.find(n => n.name === 'Note 1')?.category).toBe('work');
@@ -329,7 +343,7 @@ describe('db utility', () => {
 
     it('does not run migration if already at version 2', async () => {
       mockDbVersion = 1;
-      const oldNotes = [
+      const oldNotes: Note[] = [
         { id: 'div1', name: 'work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
         createOldNote('1', 'Note 1', 'work', 1),
       ];

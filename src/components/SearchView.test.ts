@@ -56,7 +56,7 @@ describe('Search component', () => {
   it('loads notes on mount', async () => {
     const { useNotesStore } = await import('../stores/notes.js');
     const loadNotes = vi.fn().mockResolvedValue(undefined);
-    useNotesStore.mockReturnValue({
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
       loadNotes,
       performSearch: vi.fn().mockReturnValue([]),
       getNoteById: vi.fn(),

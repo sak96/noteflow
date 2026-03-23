@@ -75,7 +75,7 @@ describe('FileList component', () => {
   it('loads notes on mount', async () => {
     const { useNotesStore } = await import('../stores/notes.js');
     const loadNotes = vi.fn().mockResolvedValue(undefined);
-    useNotesStore.mockReturnValue({
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
       loadNotes,
       flatListItems: [],
       createNote: vi.fn(),
@@ -91,7 +91,7 @@ describe('FileList component', () => {
 
   it('renders divider with fold toggle', async () => {
     const { useNotesStore } = await import('../stores/notes.js');
-    useNotesStore.mockReturnValue({
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
       loadNotes: vi.fn().mockResolvedValue(undefined),
       flatListItems: [
         { id: '1', name: 'Work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
@@ -110,7 +110,7 @@ describe('FileList component', () => {
 
   it('renders note item with title and edit button', async () => {
     const { useNotesStore } = await import('../stores/notes.js');
-    useNotesStore.mockReturnValue({
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
       loadNotes: vi.fn().mockResolvedValue(undefined),
       flatListItems: [
         { id: '1', name: 'Test Note', category: '', content: 'content', order: 1, createdAt: 0, updatedAt: 0 },
@@ -130,7 +130,7 @@ describe('FileList component', () => {
   it('clicking divider toggles fold state', async () => {
     const { useNotesStore } = await import('../stores/notes.js');
     const createDivider = vi.fn();
-    useNotesStore.mockReturnValue({
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
       loadNotes: vi.fn().mockResolvedValue(undefined),
       flatListItems: [
         { id: '1', name: 'Work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
@@ -156,7 +156,7 @@ describe('FileList component', () => {
   it('addDivider button calls createDivider', async () => {
     const { useNotesStore } = await import('../stores/notes.js');
     const createDivider = vi.fn().mockResolvedValue('div-id');
-    useNotesStore.mockReturnValue({
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
       loadNotes: vi.fn().mockResolvedValue(undefined),
       flatListItems: [],
       createNote: vi.fn(),
@@ -175,7 +175,7 @@ describe('FileList component', () => {
   it('renaming divider calls saveNote with new name', async () => {
     const { useNotesStore } = await import('../stores/notes.js');
     const saveNote = vi.fn().mockResolvedValue(undefined);
-    useNotesStore.mockReturnValue({
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
       loadNotes: vi.fn().mockResolvedValue(undefined),
       flatListItems: [
         { id: '1', name: 'Work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },

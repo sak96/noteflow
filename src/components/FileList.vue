@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { VueDraggableNext as draggable } from 'vue-draggable-next';
 import { useNotesStore } from '../stores/notes';
 import { useRouter } from '../router';

@@ -3,20 +3,20 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import FileView from '../components/FileView.vue';
 
+class MockEditorInstance {
+  state = { selection: null };
+  _onChangeCallback: (() => void) | null = null;
+  getValue() { return 'content'; }
+  setValue() {}
+  destroy() {}
+  insertText() {}
+  setSelection() {}
+}
+
 let mockInstance: MockEditorInstance | null = null;
 
 const { MockEditor } = vi.hoisted(() => {
-  class MockEditorInstance {
-    state = { selection: null };
-    _onChangeCallback: (() => void) | null = null;
-    getValue() { return 'content'; }
-    setValue() {}
-    destroy() {}
-    insertText() {}
-    setSelection() {}
-  }
-
-  const MockEditor = function(container: HTMLElement, options: { onChange?: () => void }) {
+  const MockEditor = function(_container: HTMLElement, options: { onChange?: () => void }) {
     const instance = new MockEditorInstance();
     if (options?.onChange) {
       instance._onChangeCallback = options.onChange;

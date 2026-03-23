@@ -3,6 +3,12 @@ import type { Note } from '../types/index';
 
 let miniSearch: MiniSearch<Note> | null = null;
 
+interface MiniSearchResult {
+  id: string;
+  name?: string;
+  score: number;
+}
+
 export function initSearch(notes: Note[]): void {
   miniSearch = new MiniSearch<Note>({
     fields: ['name', 'content'],
@@ -15,7 +21,7 @@ export function search(query: string): Array<{ id: string; name: string; score: 
   if (!miniSearch || !query) return [];
   return miniSearch.search(query).map(result => ({
     id: result.id as string,
-    name: (result as unknown as { name: string }).name || '',
+    name: (result as MiniSearchResult).name || '',
     score: result.score,
   }));
 }

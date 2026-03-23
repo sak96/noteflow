@@ -1,13 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import MiniSearch from 'minisearch';
 import { initSearch, search, rebuildSearchIndex } from '../utils/search.js';
 
 describe('search utility', () => {
   describe('initSearch', () => {
     it('initializes minisearch with notes', () => {
       const notes = [
-        { id: '1', name: 'Note 1', content: 'Hello world' },
-        { id: '2', name: 'Note 2', content: 'Another note' },
+        { id: '1', name: 'Note 1', content: 'Hello world', category: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', content: 'Another note', category: '', order: 0, createdAt: 0, updatedAt: 0 },
       ];
       
       initSearch(notes);
@@ -24,7 +23,7 @@ describe('search utility', () => {
     });
 
     it('returns results for valid query', () => {
-      initSearch([{ id: '1', name: 'Test Note', content: 'content' }]);
+      initSearch([{ id: '1', name: 'Test Note', content: 'content', category: '', order: 0, createdAt: 0, updatedAt: 0 }]);
       const result = search('Test');
       expect(Array.isArray(result)).toBe(true);
     });
@@ -33,8 +32,8 @@ describe('search utility', () => {
   describe('rebuildSearchIndex', () => {
     it('rebuilds search index with new notes', () => {
       const notes = [
-        { id: '1', name: 'Note 1', content: 'Content 1' },
-        { id: '2', name: 'Note 2', content: 'Content 2' },
+        { id: '1', name: 'Note 1', content: 'Content 1', category: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', content: 'Content 2', category: '', order: 0, createdAt: 0, updatedAt: 0 },
       ];
       
       rebuildSearchIndex(notes);

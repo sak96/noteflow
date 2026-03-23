@@ -2,17 +2,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useNotesStore } from '../stores/notes.js';
 
-let mockNotes = [];
+import type { Note } from '../types/index.js';
+
+let mockNotes: Note[] = [];
 
 vi.mock('../utils/db.js', () => ({
   getAllNotes: vi.fn(() => Promise.resolve([...mockNotes])),
-  addNote: vi.fn((note) => {
+  addNote: vi.fn((note: Note) => {
     mockNotes.push(note);
     return Promise.resolve();
   }),
   updateNote: vi.fn(),
   deleteNote: vi.fn(),
-  bulkImport: vi.fn((notes) => {
+  bulkImport: vi.fn((notes: Note[]) => {
     mockNotes = [...notes];
     return Promise.resolve();
   }),
@@ -38,6 +40,14 @@ import {
   getAllCategories,
 } from '../utils/db.js';
 
+type MockFn<T> = ReturnType<typeof vi.fn> & {
+  mockResolvedValue: (value: T) => void;
+  mockImplementation: (fn: () => Promise<T>) => void;
+};
+
+const getAllNotesMock = getAllNotes as unknown as MockFn<Note[]>;
+const getAllCategoriesMock = getAllCategories as unknown as MockFn<string[]>;
+
 describe('notes store', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -49,12 +59,12 @@ describe('notes store', () => {
     it('groups notes by category case-insensitively', async () => {
       const store = useNotesStore();
       
-      getAllNotes.mockResolvedValue([
-        { id: '1', name: 'Note 1', category: 'work', order: 0 },
-        { id: '2', name: 'Note 2', category: 'Work', order: 1 },
-        { id: '3', name: 'Note 3', category: 'WORK', order: 2 },
+      getAllNotesMock.mockResolvedValue([
+        { id: '1', name: 'Note 1', category: 'work', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', category: 'Work', content: '', order: 1, createdAt: 0, updatedAt: 0 },
+        { id: '3', name: 'Note 3', category: 'WORK', content: '', order: 2, createdAt: 0, updatedAt: 0 },
       ]);
-      getAllCategories.mockResolvedValue(['work']);
+      getAllCategoriesMock.mockResolvedValue(['work']);
       
       await store.loadNotes();
       
@@ -66,10 +76,10 @@ describe('notes store', () => {
     it('capitalizes category names', async () => {
       const store = useNotesStore();
       
-      getAllNotes.mockResolvedValue([
-        { id: '1', name: 'Note 1', category: 'programming', order: 0 },
+      getAllNotesMock.mockResolvedValue([
+        { id: '1', name: 'Note 1', category: 'programming', content: '', order: 0, createdAt: 0, updatedAt: 0 },
       ]);
-      getAllCategories.mockResolvedValue(['programming']);
+      getAllCategoriesMock.mockResolvedValue(['programming']);
       
       await store.loadNotes();
       
@@ -80,11 +90,11 @@ describe('notes store', () => {
     it('handles empty category as uncategorized', async () => {
       const store = useNotesStore();
       
-      getAllNotes.mockResolvedValue([
-        { id: '1', name: 'Note 1', category: '', order: 0 },
-        { id: '2', name: 'Note 2', category: null, order: 1 },
+      getAllNotesMock.mockResolvedValue([
+        { id: '1', name: 'Note 1', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', category: '', content: '', order: 1, createdAt: 0, updatedAt: 0 },
       ]);
-      getAllCategories.mockResolvedValue([]);
+      getAllCategoriesMock.mockResolvedValue([]);
       
       await store.loadNotes();
       
@@ -96,12 +106,12 @@ describe('notes store', () => {
     it('sorts notes by order within each category', async () => {
       const store = useNotesStore();
       
-      getAllNotes.mockResolvedValue([
-        { id: '1', name: 'Note A', category: 'work', order: 2 },
-        { id: '2', name: 'Note B', category: 'work', order: 0 },
-        { id: '3', name: 'Note C', category: 'work', order: 1 },
+      getAllNotesMock.mockResolvedValue([
+        { id: '1', name: 'Note A', category: 'work', content: '', order: 2, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note B', category: 'work', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '3', name: 'Note C', category: 'work', content: '', order: 1, createdAt: 0, updatedAt: 0 },
       ]);
-      getAllCategories.mockResolvedValue(['work']);
+      getAllCategoriesMock.mockResolvedValue(['work']);
       
       await store.loadNotes();
       
@@ -114,12 +124,12 @@ describe('notes store', () => {
     it('sorts categories alphabetically with empty last', async () => {
       const store = useNotesStore();
       
-      getAllNotes.mockResolvedValue([
-        { id: '1', name: 'Note 1', category: 'zebra', order: 0 },
-        { id: '2', name: 'Note 2', category: 'apple', order: 0 },
-        { id: '3', name: 'Note 3', category: '', order: 0 },
+      getAllNotesMock.mockResolvedValue([
+        { id: '1', name: 'Note 1', category: 'zebra', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', category: 'apple', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '3', name: 'Note 3', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
       ]);
-      getAllCategories.mockResolvedValue(['zebra', 'apple']);
+      getAllCategoriesMock.mockResolvedValue(['zebra', 'apple']);
       
       await store.loadNotes();
       
@@ -130,12 +140,12 @@ describe('notes store', () => {
     it('handles mixed case categories and merges them', async () => {
       const store = useNotesStore();
       
-      getAllNotes.mockResolvedValue([
-        { id: '1', name: 'Note 1', category: 'JavaScript', order: 0 },
-        { id: '2', name: 'Note 2', category: 'javascript', order: 1 },
-        { id: '3', name: 'Note 3', category: 'JAVASCRIPT', order: 2 },
+      getAllNotesMock.mockResolvedValue([
+        { id: '1', name: 'Note 1', category: 'JavaScript', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', category: 'javascript', content: '', order: 1, createdAt: 0, updatedAt: 0 },
+        { id: '3', name: 'Note 3', category: 'JAVASCRIPT', content: '', order: 2, createdAt: 0, updatedAt: 0 },
       ]);
-      getAllCategories.mockResolvedValue(['JavaScript']);
+      getAllCategoriesMock.mockResolvedValue(['JavaScript']);
       
       await store.loadNotes();
       
@@ -149,8 +159,8 @@ describe('notes store', () => {
     it('returns all notes when no filter', async () => {
       const store = useNotesStore();
       store.notes = [
-        { id: '1', name: 'Note 1', category: 'work' },
-        { id: '2', name: 'Note 2', category: 'personal' },
+        { id: '1', name: 'Note 1', category: 'work', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', category: 'personal', content: '', order: 0, createdAt: 0, updatedAt: 0 },
       ];
       store.filterCategories = [];
       
@@ -160,8 +170,8 @@ describe('notes store', () => {
     it('filters notes by selected categories', async () => {
       const store = useNotesStore();
       store.notes = [
-        { id: '1', name: 'Note 1', category: 'work' },
-        { id: '2', name: 'Note 2', category: 'personal' },
+        { id: '1', name: 'Note 1', category: 'work', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', category: 'personal', content: '', order: 0, createdAt: 0, updatedAt: 0 },
       ];
       store.filterCategories = ['work'];
       
@@ -173,8 +183,8 @@ describe('notes store', () => {
     it('excludes notes without category when filtering', async () => {
       const store = useNotesStore();
       store.notes = [
-        { id: '1', name: 'Note 1', category: 'work' },
-        { id: '2', name: 'Note 2', category: '' },
+        { id: '1', name: 'Note 1', category: 'work', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
       ];
       store.filterCategories = ['work'];
       
@@ -187,17 +197,17 @@ describe('notes store', () => {
     it('returns note by id', async () => {
       const store = useNotesStore();
       store.notes = [
-        { id: '1', name: 'Note 1' },
-        { id: '2', name: 'Note 2' },
+        { id: '1', name: 'Note 1', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note 2', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 },
       ];
       
-      expect(store.getNoteById('1').name).toBe('Note 1');
-      expect(store.getNoteById('2').name).toBe('Note 2');
+      expect(store.getNoteById('1')!.name).toBe('Note 1');
+      expect(store.getNoteById('2')!.name).toBe('Note 2');
     });
 
     it('returns undefined for unknown id', async () => {
       const store = useNotesStore();
-      store.notes = [{ id: '1', name: 'Note 1' }];
+      store.notes = [{ id: '1', name: 'Note 1', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 }];
       
       expect(store.getNoteById('999')).toBeUndefined();
     });
@@ -206,8 +216,8 @@ describe('notes store', () => {
   describe('actions', () => {
     it('createNote adds note and returns id', async () => {
       const store = useNotesStore();
-      getAllNotes.mockResolvedValue([]);
-      getAllCategories.mockResolvedValue([]);
+      getAllNotesMock.mockResolvedValue([]);
+      getAllCategoriesMock.mockResolvedValue([]);
       
       const id = await store.createNote('New Note');
       
@@ -224,8 +234,8 @@ describe('notes store', () => {
     it('createNote adds note to store and shows in flatListItems', async () => {
       const store = useNotesStore();
       
-      getAllNotes.mockImplementation(() => Promise.resolve([...mockNotes]));
-      getAllCategories.mockImplementation(() => Promise.resolve([]));
+      getAllNotesMock.mockImplementation(() => Promise.resolve([...mockNotes]));
+      getAllCategoriesMock.mockImplementation(() => Promise.resolve([]));
       
       const noteId = await store.createNote('Test Note');
       
@@ -235,7 +245,7 @@ describe('notes store', () => {
       
       const noteInStore = store.getNoteById(noteId);
       expect(noteInStore).toBeDefined();
-      expect(noteInStore.name).toBe('Test Note');
+      expect(noteInStore!.name).toBe('Test Note');
       
       const flatItems = store.flatListItems;
       expect(flatItems[0].name).toBe('Test Note');
@@ -243,8 +253,8 @@ describe('notes store', () => {
 
     it('saveNote calls updateNote', async () => {
       const store = useNotesStore();
-      getAllNotes.mockResolvedValue([]);
-      getAllCategories.mockResolvedValue([]);
+      getAllNotesMock.mockResolvedValue([]);
+      getAllCategoriesMock.mockResolvedValue([]);
       
       await store.saveNote('1', { name: 'Updated' });
       
@@ -253,8 +263,8 @@ describe('notes store', () => {
 
     it('deleteNote calls deleteNote', async () => {
       const store = useNotesStore();
-      getAllNotes.mockResolvedValue([]);
-      getAllCategories.mockResolvedValue([]);
+      getAllNotesMock.mockResolvedValue([]);
+      getAllCategoriesMock.mockResolvedValue([]);
       
       await store.deleteNote('1');
       
@@ -263,9 +273,9 @@ describe('notes store', () => {
 
     it('importNotes calls bulkImport', async () => {
       const store = useNotesStore();
-      const notes = [{ id: '1', name: 'Note 1' }];
-      getAllNotes.mockResolvedValue(notes);
-      getAllCategories.mockResolvedValue([]);
+      const notes = [{ id: '1', name: 'Note 1', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 }];
+      getAllNotesMock.mockResolvedValue(notes);
+      getAllCategoriesMock.mockResolvedValue([]);
       
       await store.importNotes(notes);
       
@@ -274,7 +284,7 @@ describe('notes store', () => {
 
     it('exportNotes returns JSON string', async () => {
       const store = useNotesStore();
-      store.notes = [{ id: '1', name: 'Note 1' }];
+      store.notes = [{ id: '1', name: 'Note 1', category: '', content: '', order: 0, createdAt: 0, updatedAt: 0 }];
       
       const json = await store.exportNotes();
       
@@ -283,8 +293,8 @@ describe('notes store', () => {
 
     it('createDivider creates divider with content null', async () => {
       const store = useNotesStore();
-      getAllNotes.mockResolvedValue([]);
-      getAllCategories.mockResolvedValue([]);
+      getAllNotesMock.mockResolvedValue([]);
+      getAllCategoriesMock.mockResolvedValue([]);
       
       await store.createDivider('Work');
       

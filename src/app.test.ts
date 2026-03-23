@@ -17,8 +17,8 @@ vi.mock('./utils/search.js', () => ({
 }));
 
 global.indexedDB = {
-  deleteDatabase: vi.fn(() => Promise.resolve()),
-};
+  deleteDatabase: vi.fn().mockReturnValue({} as unknown as IDBOpenDBRequest),
+} as unknown as IDBFactory;
 
 global.matchMedia = vi.fn((query) => ({
   matches: false,
@@ -39,7 +39,7 @@ describe('NoteFlow App', () => {
   test('basic DOM setup works', () => {
     document.body.innerHTML = '<h1>Notes</h1><button>🔍</button><button>📤</button><button>📥</button><button>➕</button>';
     
-    expect(document.querySelector('h1').textContent).toBe('Notes');
+    expect(document.querySelector('h1')!.textContent).toBe('Notes');
     const buttons = document.querySelectorAll('button');
     expect(buttons.length).toBe(4);
     expect(buttons[0].textContent).toBe('🔍');
