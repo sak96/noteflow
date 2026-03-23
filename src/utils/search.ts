@@ -1,5 +1,6 @@
 import MiniSearch from 'minisearch';
 import type { Note } from '../types/index';
+import { isDivider } from '../types/index';
 
 let miniSearch: MiniSearch<Note> | null = null;
 
@@ -14,7 +15,7 @@ export function initSearch(notes: Note[]): void {
     fields: ['name', 'content'],
     storeFields: ['id', 'name'],
   });
-  miniSearch.addAll(notes);
+  miniSearch.addAll(notes.filter(note => !isDivider(note)));
 }
 
 export function search(query: string): Array<{ id: string; name: string; score: number }> {

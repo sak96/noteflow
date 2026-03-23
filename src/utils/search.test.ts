@@ -14,6 +14,18 @@ describe('search utility', () => {
       const result = search('Hello');
       expect(result.length).toBeGreaterThanOrEqual(0);
     });
+
+    it('does not index dividers (notes with null content)', () => {
+      const notes = [
+        { id: '1', name: 'Real Note', content: 'Some content', category: '', order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Divider', content: null, category: '', order: 0, createdAt: 0, updatedAt: 0 },
+      ];
+      
+      initSearch(notes);
+      
+      const result = search('Divider');
+      expect(result).toHaveLength(0);
+    });
   });
 
   describe('search', () => {
