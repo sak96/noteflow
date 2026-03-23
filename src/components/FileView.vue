@@ -10,11 +10,6 @@
         @keydown.enter.prevent="blurTarget"
       >{{ note?.name }}</div>
       <div class="header-actions">
-        <button 
-          @click="saveNote" 
-          class="btn"
-          :class="{ 'btn-dirty': isDirty }"
-        >💾</button>
         <button @click="confirmDelete" class="btn btn-danger">🗑️</button>
       </div>
     </header>
@@ -49,7 +44,8 @@ const note = ref<Note | null>(null);
 const titleEl = ref<HTMLElement | null>(null);
 const editorContainer = ref<HTMLElement | null>(null);
 const deleteDialog = ref<HTMLDialogElement | null>(null);
-const isDirty = ref(false);
+const saveTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
+const AUTOSAVE_DELAY = 3000;
 
 let editor: InstanceType<typeof Overtype> | null = null;
 
@@ -66,6 +62,10 @@ onMounted(async () => {
 onUnmounted(() => {
   if (editor && editor.length > 0) {
     editor[0].destroy();
+  }
+  if (saveTimeout.value) {
+    clearTimeout(saveTimeout.value);
+    saveNote();
   }
 });
 
@@ -90,15 +90,18 @@ function loadNote() {
       toolbar: true,
       theme: getEditorTheme(),
       onChange: () => {
-        isDirty.value = true;
+        if (saveTimeout.value) {
+          clearTimeout(saveTimeout.value);
+        }
+        saveTimeout.value = setTimeout(() => {
+          saveNote();
+        }, AUTOSAVE_DELAY);
       },
       spellcheck: true,
       showStats: true,
     });
     editor = instances;
   }
-  
-  isDirty.value = false;
 }
 
 function goHome() {
@@ -116,7 +119,6 @@ async function updateTitle() {
 async function saveNote() {
   const content = editor?.[0]?.getValue() || '';
   await store.saveNote(props.id, { content });
-  isDirty.value = false;
 }
 
 function confirmDelete() {
@@ -173,11 +175,6 @@ function closeDeleteDialog() {
 .header-actions {
   display: flex;
   gap: 10px;
-}
-
-.btn-dirty {
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 .editor-container {

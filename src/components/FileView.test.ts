@@ -1,13 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import FileView from '../components/FileView.vue';
 
+let mockInstance: MockEditorInstance | null = null;
+
 const { MockEditor } = vi.hoisted(() => {
   class MockEditorInstance {
-    constructor() {
-      this.state = { selection: null };
-    }
+    state = { selection: null };
+    _onChangeCallback: (() => void) | null = null;
     getValue() { return 'content'; }
     setValue() {}
     destroy() {}
@@ -15,8 +16,13 @@ const { MockEditor } = vi.hoisted(() => {
     setSelection() {}
   }
 
-  const MockEditor = function() {
-    return [new MockEditorInstance()];
+  const MockEditor = function(container: HTMLElement, options: { onChange?: () => void }) {
+    const instance = new MockEditorInstance();
+    if (options?.onChange) {
+      instance._onChangeCallback = options.onChange;
+    }
+    mockInstance = instance;
+    return [instance];
   };
 
   return { MockEditor };
@@ -26,11 +32,14 @@ vi.mock('overtype', () => ({
   default: MockEditor,
 }));
 
-vi.mock('../stores/notes.js', () => ({
+const mockSaveNote = vi.fn().mockResolvedValue(undefined);
+const mockGetNoteById = vi.fn().mockReturnValue({ id: '1', name: 'Note 1', content: '' });
+
+vi.mock('../stores/notes', () => ({
   useNotesStore: () => ({
     loadNotes: vi.fn().mockResolvedValue(undefined),
-    getNoteById: vi.fn().mockReturnValue({ id: '1', name: 'Note 1', content: '' }),
-    saveNote: vi.fn().mockResolvedValue(undefined),
+    getNoteById: mockGetNoteById,
+    saveNote: mockSaveNote,
     deleteNote: vi.fn().mockResolvedValue(undefined),
   }),
 }));
@@ -76,5 +85,83 @@ describe('File component', () => {
     const wrapper = mount(FileView, { props: { id: '1' } });
     expect(wrapper.find('dialog').exists()).toBe(true);
     wrapper.unmount();
+  });
+
+  it('does not have save button (autosave enabled)', async () => {
+    const wrapper = mount(FileView, { props: { id: '1' } });
+    expect(wrapper.find('button:contains("💾")').exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  describe('auto save', () => {
+    beforeEach(() => {
+      mockInstance = null;
+      mockSaveNote.mockClear();
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('triggers auto save after content change delay', async () => {
+      const wrapper = mount(FileView, { props: { id: '1' } });
+      await vi.runAllTimersAsync();
+      
+      mockInstance!._onChangeCallback?.();
+      
+      expect(mockSaveNote).not.toHaveBeenCalled();
+      
+      vi.advanceTimersByTime(3000);
+      
+      expect(mockSaveNote).toHaveBeenCalledTimes(1);
+      expect(mockSaveNote).toHaveBeenCalledWith('1', { content: 'content' });
+      
+      wrapper.unmount();
+    });
+
+    it('debounces rapid content changes', async () => {
+      const wrapper = mount(FileView, { props: { id: '1' } });
+      await vi.runAllTimersAsync();
+      
+      mockInstance!._onChangeCallback?.();
+      vi.advanceTimersByTime(1000);
+      mockInstance!._onChangeCallback?.();
+      vi.advanceTimersByTime(1000);
+      mockInstance!._onChangeCallback?.();
+      
+      expect(mockSaveNote).not.toHaveBeenCalled();
+      
+      vi.advanceTimersByTime(3000);
+      
+      expect(mockSaveNote).toHaveBeenCalledTimes(1);
+      
+      wrapper.unmount();
+    });
+
+    it('saves correct content from editor', async () => {
+      const wrapper = mount(FileView, { props: { id: '1' } });
+      await vi.runAllTimersAsync();
+      mockInstance!.getValue = vi.fn().mockReturnValue('test content');
+      
+      mockInstance!._onChangeCallback?.();
+      vi.advanceTimersByTime(3000);
+      
+      expect(mockSaveNote).toHaveBeenCalledWith('1', { content: 'test content' });
+      
+      wrapper.unmount();
+    });
+
+    it('saves on unmount when there are pending changes', async () => {
+      const wrapper = mount(FileView, { props: { id: '1' } });
+      await vi.runAllTimersAsync();
+      
+      mockInstance!._onChangeCallback?.();
+      
+      wrapper.unmount();
+      
+      expect(mockSaveNote).toHaveBeenCalledTimes(1);
+      expect(mockSaveNote).toHaveBeenCalledWith('1', { content: 'content' });
+    });
   });
 });
