@@ -21,7 +21,7 @@
         contenteditable
         ref="newTitle"
         class="title-input"
-        placeholder="New note title..."
+        placeholder="New note 📝 or divider 📂title..."
         @keydown.enter.prevent="addNote"
       ></div>
       <button @click="addNote" class="btn btn-primary" title="Add Note">📝</button>
@@ -56,6 +56,7 @@
           </template>
           <template v-else>
             <span class="drag-handle">⠿</span>
+            <span class="note-icon">📝</span>
             <span
               contenteditable
               class="note-title"
@@ -282,6 +283,11 @@ function blurTarget(event: KeyboardEvent) {
   flex: 1;
   outline: none;
   min-width: 0;
+}
+
+.note-icon {
+  font-size: 16px;
+  color: var(--fg-secondary);
 }
 
 .note-item .btn-small {
