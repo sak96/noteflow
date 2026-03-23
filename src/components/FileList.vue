@@ -45,7 +45,12 @@
           <template v-if="isDivider(item)">
             <div class="divider-content" @click="toggleFold(item.id)">
               <span class="fold-toggle">{{ isFolded(item.id) ? '📁' : '📂' }}</span>
-              <span class="divider-name">{{ item.name }}</span>
+              <span
+                contenteditable
+                class="divider-name"
+                @blur="updateTitle(item.id, $event)"
+                @keydown.enter.prevent="blurTarget"
+              >{{ item.name }}</span>
             </div>
             <span v-if="!isFolded(item.id)" class="drag-handle">⠿</span>
           </template>

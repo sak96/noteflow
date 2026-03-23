@@ -171,4 +171,27 @@ describe('FileList component', () => {
     
     wrapper.unmount();
   });
+
+  it('renaming divider calls saveNote with new name', async () => {
+    const { useNotesStore } = await import('../stores/notes.js');
+    const saveNote = vi.fn().mockResolvedValue(undefined);
+    useNotesStore.mockReturnValue({
+      loadNotes: vi.fn().mockResolvedValue(undefined),
+      flatListItems: [
+        { id: '1', name: 'Work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
+      ],
+      createNote: vi.fn(),
+      createDivider: vi.fn(),
+      saveNote,
+    });
+    
+    const wrapper = mount(FileList);
+    
+    const dividerName = wrapper.find('.divider-name');
+    await dividerName.trigger('blur');
+    
+    expect(saveNote).toHaveBeenCalledWith('1', { name: 'Work' });
+    
+    wrapper.unmount();
+  });
 });
