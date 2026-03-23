@@ -144,11 +144,11 @@ describe('FileList component', () => {
     
     await wrapper.find('.divider-content').trigger('click');
     
-    expect(wrapper.find('.fold-toggle').text()).toBe('▶');
+    expect(wrapper.find('.fold-toggle').text()).toBe('📁');
     
     await wrapper.find('.divider-content').trigger('click');
     
-    expect(wrapper.find('.fold-toggle').text()).toBe('▼');
+    expect(wrapper.find('.fold-toggle').text()).toBe('📂');
     
     wrapper.unmount();
   });

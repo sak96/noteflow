@@ -24,7 +24,7 @@
         placeholder="New note title..."
         @keydown.enter.prevent="addNote"
       ></div>
-      <button @click="addNote" class="btn btn-primary" title="Add Note">➕</button>
+      <button @click="addNote" class="btn btn-primary" title="Add Note">📝</button>
       <button @click="addDivider" class="btn btn-primary" title="Add Divider">📂</button>
     </div>
 
@@ -44,7 +44,7 @@
         >
           <template v-if="isDivider(item)">
             <div class="divider-content" @click="toggleFold(item.id)">
-              <span class="fold-toggle">{{ isFolded(item.id) ? '▶' : '▼' }}</span>
+              <span class="fold-toggle">{{ isFolded(item.id) ? '📁' : '📂' }}</span>
               <span class="divider-name">{{ item.name }}</span>
             </div>
             <span v-if="!isFolded(item.id)" class="drag-handle">⠿</span>
@@ -239,7 +239,7 @@ function blurTarget(event: KeyboardEvent) {
 }
 
 .fold-toggle {
-  font-size: 10px;
+  font-size: 16px;
   color: var(--fg-secondary);
 }
 
