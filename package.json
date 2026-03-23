@@ -8,6 +8,7 @@
     "build": "vite build",
     "test": "vitest --run",
     "lint": "eslint . --fix",
+    "typecheck": "vue-tsc --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {

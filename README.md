@@ -23,4 +23,5 @@ npm run dev
 npm run build
 npm run test
 npm run lint
+npm run typecheck
 ```
