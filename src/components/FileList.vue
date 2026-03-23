@@ -24,63 +24,61 @@
         placeholder="New note title..."
         @keydown.enter.prevent="addNote"
       ></div>
-      <input
-        v-model="newCategory"
-        list="categories"
-        placeholder="Category"
-        class="category-input"
-      />
-      <datalist id="categories">
-        <option v-for="cat in store.categories" :key="cat" :value="cat" />
-      </datalist>
-      <button @click="addNote" class="btn btn-primary">➕</button>
+      <button @click="addNote" class="btn btn-primary" title="Add Note">➕</button>
+      <button @click="addDivider" class="btn btn-primary" title="Add Divider">📂</button>
     </div>
 
     <div class="notes-list">
-      <details
-        v-for="(notes, category) in store.groupedByCategory"
-        :key="category"
-        class="category-group"
-        open
+      <draggable
+        :list="store.flatListItems"
+        handle=".drag-handle"
+        @end="onDragEnd"
+        class="draggable-list"
       >
-        <summary class="category-title">{{ category || 'Uncategorized' }}</summary>
-        <draggable
-          :list="notes"
-          handle=".drag-handle"
-          @end="onDragEnd"
-          class="draggable-list"
+        <div
+          v-for="item in store.flatListItems"
+          :key="item.id"
+          :class="isDivider(item) ? 'divider-item' : 'note-item'"
+          :data-id="item.id"
+          v-show="isItemVisible(item)"
         >
-          <div v-for="element in notes" :key="element.id">
-              <div class="note-item" :data-id="element.id">
-                <span class="drag-handle">⠿</span>
-                <span
-                  contenteditable
-                  class="note-title"
-                  @blur="updateTitle(element.id, $event)"
-                  @keydown.enter.prevent="blurTarget"
-                >{{ element.name }}</span>
-                <button @click="goToFile(element.id)" class="btn btn-small">✏️</button>
-              </div>
-          </div>
-        </draggable>
-      </details>
+          <template v-if="isDivider(item)">
+            <div class="divider-content" @click="toggleFold(item.id)">
+              <span class="fold-toggle">{{ isFolded(item.id) ? '▶' : '▼' }}</span>
+              <span class="divider-name">{{ item.name }}</span>
+            </div>
+            <span v-if="!isFolded(item.id)" class="drag-handle">⠿</span>
+          </template>
+          <template v-else>
+            <span class="drag-handle">⠿</span>
+            <span
+              contenteditable
+              class="note-title"
+              @blur="updateTitle(item.id, $event)"
+              @keydown.enter.prevent="blurTarget"
+            >{{ item.name }}</span>
+            <button @click="goToFile(item.id)" class="btn btn-small">✏️</button>
+          </template>
+        </div>
+      </draggable>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { VueDraggableNext as draggable } from 'vue-draggable-next';
 import { useNotesStore } from '../stores/notes';
 import { useRouter } from '../router';
 import type { Note } from '../types/index';
+import { isDivider } from '../types/index';
 
 const store = useNotesStore();
 const router = useRouter();
 
 const newTitle = ref<HTMLElement | null>(null);
-const newCategory = ref('');
 const fileInput = ref<HTMLInputElement | null>(null);
+const folded = ref<Map<string, boolean>>(new Map());
 
 onMounted(async () => {
   await store.loadNotes();
@@ -96,11 +94,15 @@ function goToFile(id: string) {
 
 async function addNote() {
   const title = newTitle.value?.innerText?.trim() || 'Untitled';
-  const category = newCategory.value.trim();
-  const id = await store.createNote(title, category);
+  const id = await store.createNote(title);
   if (newTitle.value) newTitle.value.innerText = '';
-  newCategory.value = '';
   router.navigate(`/file/${id}`);
+}
+
+async function addDivider() {
+  const title = newTitle.value?.innerText?.trim() || 'New Section';
+  await store.createDivider(title);
+  if (newTitle.value) newTitle.value.innerText = '';
 }
 
 async function updateTitle(id: string, event: FocusEvent) {
@@ -112,11 +114,31 @@ async function updateTitle(id: string, event: FocusEvent) {
 }
 
 async function onDragEnd() {
-  const orderedNotes: Note[] = [];
-  Object.values(store.groupedByCategory).forEach(notes => {
-    notes.forEach(n => orderedNotes.push(n));
-  });
-  await store.updateNoteOrders(orderedNotes);
+  await store.updateNoteOrders(store.flatListItems);
+}
+
+function toggleFold(id: string) {
+  const newFolded = new Map(folded.value);
+  newFolded.set(id, !newFolded.get(id));
+  folded.value = newFolded;
+}
+
+function isFolded(id: string): boolean {
+  return folded.value.get(id) || false;
+}
+
+function isItemVisible(item: Note): boolean {
+  if (isDivider(item)) return true;
+  
+  const items = store.flatListItems;
+  const noteIndex = items.findIndex(i => i.id === item.id);
+  
+  for (let i = noteIndex - 1; i >= 0; i--) {
+    if (isDivider(items[i])) {
+      return !isFolded(items[i].id);
+    }
+  }
+  return true;
 }
 
 function triggerImport() {
@@ -192,31 +214,40 @@ function blurTarget(event: KeyboardEvent) {
   color: var(--fg-secondary);
 }
 
-.category-input {
-  width: 150px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--bg);
-  color: var(--fg);
-}
-
-.category-group {
-  margin-bottom: 15px;
-}
-
-.category-title {
-  font-size: 14px;
-  color: var(--fg-secondary);
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
 .draggable-list {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.divider-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.divider-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fold-toggle {
+  font-size: 10px;
+  color: var(--fg-secondary);
+}
+
+.divider-name {
+  font-weight: 600;
+  color: var(--fg-secondary);
+  text-transform: uppercase;
+  font-size: 12px;
 }
 
 .note-item {

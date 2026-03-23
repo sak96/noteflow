@@ -209,36 +209,36 @@ describe('notes store', () => {
       getAllNotes.mockResolvedValue([]);
       getAllCategories.mockResolvedValue([]);
       
-      const id = await store.createNote('New Note', 'work');
+      const id = await store.createNote('New Note');
       
       expect(addNote).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'New Note',
-          category: 'work',
+          category: '',
+          content: '',
         })
       );
       expect(id).toBe('test-id-123');
     });
 
-    it('createNote adds note to store and shows in groupedByCategory', async () => {
+    it('createNote adds note to store and shows in flatListItems', async () => {
       const store = useNotesStore();
       
       getAllNotes.mockImplementation(() => Promise.resolve([...mockNotes]));
-      getAllCategories.mockImplementation(() => Promise.resolve(['Work']));
+      getAllCategories.mockImplementation(() => Promise.resolve([]));
       
-      const noteId = await store.createNote('Test Note', 'Work');
+      const noteId = await store.createNote('Test Note');
       
       expect(store.notes.length).toBe(1);
       expect(store.notes[0].name).toBe('Test Note');
-      expect(store.notes[0].category).toBe('Work');
+      expect(store.notes[0].category).toBe('');
       
       const noteInStore = store.getNoteById(noteId);
       expect(noteInStore).toBeDefined();
       expect(noteInStore.name).toBe('Test Note');
       
-      const grouped = store.groupedByCategory;
-      expect(grouped['Work']).toBeDefined();
-      expect(grouped['Work'][0].name).toBe('Test Note');
+      const flatItems = store.flatListItems;
+      expect(flatItems[0].name).toBe('Test Note');
     });
 
     it('saveNote calls updateNote', async () => {
@@ -279,6 +279,65 @@ describe('notes store', () => {
       const json = await store.exportNotes();
       
       expect(json).toBe(JSON.stringify(store.notes, null, 2));
+    });
+
+    it('createDivider creates divider with content null', async () => {
+      const store = useNotesStore();
+      getAllNotes.mockResolvedValue([]);
+      getAllCategories.mockResolvedValue([]);
+      
+      await store.createDivider('Work');
+      
+      expect(addNote).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Work',
+          category: '',
+          content: null,
+        })
+      );
+    });
+  });
+
+  describe('getters', () => {
+    it('flatListItems returns notes sorted by order', async () => {
+      const store = useNotesStore();
+      store.notes = [
+        { id: '2', name: 'Note 2', category: '', content: 'content', order: 1, createdAt: 0, updatedAt: 0 },
+        { id: '1', name: 'Note 1', category: '', content: 'content', order: 0, createdAt: 0, updatedAt: 0 },
+      ];
+      
+      const items = store.flatListItems;
+      
+      expect(items[0].id).toBe('1');
+      expect(items[1].id).toBe('2');
+    });
+
+    it('flatListItems includes dividers in sorted order', async () => {
+      const store = useNotesStore();
+      store.notes = [
+        { id: '3', name: 'Note 1', category: '', content: 'content', order: 2, createdAt: 0, updatedAt: 0 },
+        { id: '1', name: 'Work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Personal', category: '', content: null, order: 1, createdAt: 0, updatedAt: 0 },
+      ];
+      
+      const items = store.flatListItems;
+      
+      expect(items[0].name).toBe('Work');
+      expect(items[1].name).toBe('Personal');
+      expect(items[2].name).toBe('Note 1');
+    });
+
+    it('flatListItems treats content null as divider', async () => {
+      const store = useNotesStore();
+      store.notes = [
+        { id: '1', name: 'Divider', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
+        { id: '2', name: 'Note', category: '', content: 'content', order: 1, createdAt: 0, updatedAt: 0 },
+      ];
+      
+      const items = store.flatListItems;
+      
+      expect(items[0].content).toBe(null);
+      expect(items[1].content).not.toBe(null);
     });
   });
 });

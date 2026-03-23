@@ -8,6 +8,10 @@ export interface Note {
   updatedAt: number;
 }
 
+export function isDivider(item: Note): boolean {
+  return item.content === null;
+}
+
 export interface NoteUpdate {
   name?: string;
   category?: string;

@@ -64,6 +64,11 @@ export const useNotesStore = defineStore('notes', {
     getNoteById: (state: NotesState) => (id: string): Note | undefined => {
       return state.notes.find(n => n.id === id);
     },
+
+    flatListItems: (state: NotesState): Note[] => {
+      const sorted = [...state.notes].sort((a, b) => a.order - b.order);
+      return sorted;
+    },
   },
 
   actions: {
@@ -79,7 +84,7 @@ export const useNotesStore = defineStore('notes', {
       }
     },
 
-    async createNote(name = 'Untitled', category = ''): Promise<string> {
+    async createNote(name = 'Untitled'): Promise<string> {
       const maxOrder = this.notes.length > 0 
         ? Math.max(...this.notes.map(n => n.order)) + 1 
         : 0;
@@ -88,7 +93,7 @@ export const useNotesStore = defineStore('notes', {
       const note: Note = {
         id: generateId(),
         name,
-        category,
+        category: '',
         content: '',
         order: maxOrder,
         createdAt: now,
@@ -98,6 +103,27 @@ export const useNotesStore = defineStore('notes', {
       await addNote(note);
       await this.loadNotes();
       return note.id;
+    },
+
+    async createDivider(name: string): Promise<string> {
+      const maxOrder = this.notes.length > 0 
+        ? Math.max(...this.notes.map(n => n.order)) + 1 
+        : 0;
+      
+      const now = Date.now();
+      const divider: Note = {
+        id: generateId(),
+        name,
+        category: '',
+        content: null as any,
+        order: maxOrder,
+        createdAt: now,
+        updatedAt: now,
+      };
+      
+      await addNote(divider);
+      await this.loadNotes();
+      return divider.id;
     },
 
     async saveNote(id: string, updates: NoteUpdate): Promise<void> {

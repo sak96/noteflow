@@ -4,7 +4,7 @@ import type { Note, NoteUpdate } from '../types/index';
 export type { Note, NoteUpdate };
 
 const DB_NAME = 'noteflow';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'notes';
 
 interface NoteflowDB extends DBSchema {
@@ -23,7 +23,7 @@ let dbPromise: Promise<IDBPDatabase<NoteflowDB>> | null = null;
 export async function initDB(): Promise<IDBPDatabase<NoteflowDB>> {
   if (!dbPromise) {
     dbPromise = openDB<NoteflowDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db, oldVersion, newVersion) {
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
           store.createIndex('category', 'category');
@@ -32,7 +32,76 @@ export async function initDB(): Promise<IDBPDatabase<NoteflowDB>> {
       },
     });
   }
-  return dbPromise;
+  const db = await dbPromise;
+  const allNotes = await db.getAll(STORE_NAME);
+  const hasDividers = allNotes.some(n => n.content === null);
+  if (!hasDividers && allNotes.length > 0) {
+    await migrateToV2(db, allNotes);
+  }
+  return db;
+}
+
+async function migrateToV2(db: IDBPDatabase<NoteflowDB>, oldNotes: Note[]): Promise<void> {
+  if (oldNotes.length === 0) return;
+  
+  const indexedNotes = oldNotes.map((n, i) => ({ note: n, index: i }));
+  
+  const hasUncategorized = indexedNotes.some(({ note }) => !note.category);
+  
+  const categories = [...new Set(
+    indexedNotes
+      .filter(({ note }) => note.category && note.category.trim())
+      .map(({ note }) => note.category)
+  )].sort();
+
+  const categoryOrder = hasUncategorized 
+    ? ['Uncategorized', ...categories] 
+    : categories;
+
+  const notesByCategory = new Map<string, typeof indexedNotes>();
+  for (const { note, index } of indexedNotes) {
+    const cat = note.category || 'Uncategorized';
+    if (!notesByCategory.has(cat)) {
+      notesByCategory.set(cat, []);
+    }
+    notesByCategory.get(cat)!.push({ note, index });
+  }
+
+  for (const notes of notesByCategory.values()) {
+    notes.sort((a, b) => {
+      const orderDiff = a.note.order - b.note.order;
+      return orderDiff !== 0 ? orderDiff : a.index - b.index;
+    });
+  }
+
+  const newItems: Note[] = [];
+  let order = 0;
+
+  for (const cat of categoryOrder) {
+    newItems.push({
+      id: generateId(),
+      name: cat,
+      category: '',
+      content: null as any,
+      order: order++,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    const categoryNotes = notesByCategory.get(cat) || [];
+    for (const { note } of categoryNotes) {
+      newItems.push({
+        ...note,
+        order: order++,
+        updatedAt: Date.now(),
+      });
+    }
+  }
+
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  await tx.store.clear();
+  await Promise.all(newItems.map(item => tx.store.put(item)));
+  await tx.done;
 }
 
 export async function getAllNotes(): Promise<Note[]> {
