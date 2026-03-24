@@ -28,6 +28,14 @@
       <button @click="addDivider" class="btn btn-primary" title="Add Divider">📂</button>
     </div>
 
+    <dialog ref="deleteDialog" class="delete-dialog">
+      <p>Delete this divider?</p>
+      <div class="dialog-actions">
+        <button @click="closeDeleteDialog" class="btn">Cancel</button>
+        <button @click="deleteDivider" class="btn btn-danger">Delete</button>
+      </div>
+    </dialog>
+
     <div class="notes-list">
       <draggable
         :list="store.flatListItems"
@@ -43,6 +51,7 @@
           v-show="isItemVisible(item)"
         >
           <template v-if="isDivider(item)">
+            <span v-if="!isFolded(item.id)" class="drag-handle">⠿</span>
             <div class="divider-content" @click="toggleFold(item.id)">
               <span class="fold-toggle">{{ isFolded(item.id) ? '📁' : '📂' }}</span>
               <span
@@ -52,7 +61,7 @@
                 @keydown.enter.prevent="blurTarget"
               >{{ item.name }}</span>
             </div>
-            <span v-if="!isFolded(item.id)" class="drag-handle">⠿</span>
+            <button @click.stop="confirmDeleteDivider(item.id)" class="btn btn-small btn-danger" title="Delete Divider">🗑️</button>
           </template>
           <template v-else>
             <span class="drag-handle">⠿</span>
@@ -85,6 +94,8 @@ const router = useRouter();
 const newTitle = ref<HTMLElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 const folded = ref<Map<string, boolean>>(new Map());
+const deleteDialog = ref<HTMLDialogElement | null>(null);
+const deletingDividerId = ref<string | null>(null);
 
 onMounted(async () => {
   await store.loadNotes();
@@ -177,6 +188,23 @@ async function exportNotes() {
 
 function blurTarget(event: KeyboardEvent) {
   (event.target as HTMLElement)?.blur();
+}
+
+function confirmDeleteDivider(id: string) {
+  deletingDividerId.value = id;
+  deleteDialog.value?.showModal();
+}
+
+function closeDeleteDialog() {
+  deleteDialog.value?.close();
+  deletingDividerId.value = null;
+}
+
+async function deleteDivider() {
+  if (deletingDividerId.value) {
+    await store.deleteNote(deletingDividerId.value);
+  }
+  closeDeleteDialog();
 }
 </script>
 
@@ -294,5 +322,34 @@ function blurTarget(event: KeyboardEvent) {
   border: none;
   padding: 4px;
   background: transparent;
+}
+
+.btn-danger {
+  background: var(--bg-danger, #fee);
+  border-color: var(--border-danger, #fcc);
+  color: var(--fg-danger, #c00);
+}
+
+.btn-danger:hover {
+  background: var(--bg-danger-hover, #fdd);
+}
+
+.delete-dialog {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.delete-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 15px;
 }
 </style>

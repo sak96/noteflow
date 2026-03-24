@@ -10,6 +10,7 @@ vi.mock('../stores/notes.js', () => ({
     createNote: vi.fn().mockResolvedValue('new-id'),
     createDivider: vi.fn().mockResolvedValue('divider-id'),
     saveNote: vi.fn().mockResolvedValue(undefined),
+    deleteNote: vi.fn().mockResolvedValue(undefined),
     updateNoteOrders: vi.fn().mockResolvedValue(undefined),
     importNotes: vi.fn().mockResolvedValue(undefined),
     exportNotes: vi.fn().mockResolvedValue('[]'),
@@ -191,6 +192,94 @@ describe('FileList component', () => {
     await dividerName.trigger('blur');
     
     expect(saveNote).toHaveBeenCalledWith('1', { name: 'Work' });
+    
+    wrapper.unmount();
+  });
+
+  it('renders delete button on divider', async () => {
+    const { useNotesStore } = await import('../stores/notes.js');
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
+      loadNotes: vi.fn().mockResolvedValue(undefined),
+      flatListItems: [
+        { id: '1', name: 'Work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
+      ],
+      createNote: vi.fn(),
+      createDivider: vi.fn(),
+      deleteNote: vi.fn().mockResolvedValue(undefined),
+    });
+    
+    const wrapper = mount(FileList);
+    
+    expect(wrapper.find('.divider-item .btn-danger').exists()).toBe(true);
+    expect(wrapper.find('.divider-item .btn-danger').text()).toBe('🗑️');
+    
+    wrapper.unmount();
+  });
+
+  it('clicking delete button shows confirmation dialog', async () => {
+    const { useNotesStore } = await import('../stores/notes.js');
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
+      loadNotes: vi.fn().mockResolvedValue(undefined),
+      flatListItems: [
+        { id: '1', name: 'Work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
+      ],
+      createNote: vi.fn(),
+      createDivider: vi.fn(),
+      deleteNote: vi.fn().mockResolvedValue(undefined),
+    });
+    
+    const wrapper = mount(FileList);
+    
+    await wrapper.find('.divider-item .btn-danger').trigger('click');
+    
+    expect(wrapper.find('.delete-dialog').exists()).toBe(true);
+    expect(wrapper.find('.delete-dialog').text()).toContain('Delete this divider?');
+    
+    wrapper.unmount();
+  });
+
+  it('confirming delete calls deleteNote', async () => {
+    const { useNotesStore } = await import('../stores/notes.js');
+    const deleteNote = vi.fn().mockResolvedValue(undefined);
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
+      loadNotes: vi.fn().mockResolvedValue(undefined),
+      flatListItems: [
+        { id: '1', name: 'Work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
+      ],
+      createNote: vi.fn(),
+      createDivider: vi.fn(),
+      deleteNote,
+    });
+    
+    const wrapper = mount(FileList);
+    
+    await wrapper.find('.divider-item .btn-danger').trigger('click');
+    await wrapper.find('.delete-dialog .btn-danger').trigger('click');
+    
+    expect(deleteNote).toHaveBeenCalledWith('1');
+    
+    wrapper.unmount();
+  });
+
+  it('canceling delete does not call deleteNote', async () => {
+    const { useNotesStore } = await import('../stores/notes.js');
+    const deleteNote = vi.fn().mockResolvedValue(undefined);
+    (useNotesStore as unknown as ReturnType<typeof vi.fn> & { mockReturnValue: (value: unknown) => void }).mockReturnValue({
+      loadNotes: vi.fn().mockResolvedValue(undefined),
+      flatListItems: [
+        { id: '1', name: 'Work', category: '', content: null, order: 0, createdAt: 0, updatedAt: 0 },
+      ],
+      createNote: vi.fn(),
+      createDivider: vi.fn(),
+      deleteNote,
+    });
+    
+    const wrapper = mount(FileList);
+    
+    await wrapper.find('.divider-item .btn-danger').trigger('click');
+    await wrapper.find('.delete-dialog .btn').trigger('click');
+    
+    expect(deleteNote).not.toHaveBeenCalled();
     
     wrapper.unmount();
   });
