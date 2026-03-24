@@ -210,8 +210,8 @@ describe('FileList component', () => {
     
     const wrapper = mount(FileList);
     
-    expect(wrapper.find('.divider-item .btn-danger').exists()).toBe(true);
-    expect(wrapper.find('.divider-item .btn-danger').text()).toBe('🗑️');
+    expect(wrapper.find('.divider-item .btn-delete').exists()).toBe(true);
+    expect(wrapper.find('.divider-item .btn-delete').text()).toBe('🗑️');
     
     wrapper.unmount();
   });
@@ -230,7 +230,7 @@ describe('FileList component', () => {
     
     const wrapper = mount(FileList);
     
-    await wrapper.find('.divider-item .btn-danger').trigger('click');
+    await wrapper.find('.divider-item .btn-delete').trigger('click');
     
     expect(wrapper.find('.delete-dialog').exists()).toBe(true);
     expect(wrapper.find('.delete-dialog').text()).toContain('Delete this divider?');
@@ -253,7 +253,7 @@ describe('FileList component', () => {
     
     const wrapper = mount(FileList);
     
-    await wrapper.find('.divider-item .btn-danger').trigger('click');
+    await wrapper.find('.divider-item .btn-delete').trigger('click');
     await wrapper.find('.delete-dialog .btn-danger').trigger('click');
     
     expect(deleteNote).toHaveBeenCalledWith('1');
@@ -276,7 +276,7 @@ describe('FileList component', () => {
     
     const wrapper = mount(FileList);
     
-    await wrapper.find('.divider-item .btn-danger').trigger('click');
+    await wrapper.find('.divider-item .btn-delete').trigger('click');
     await wrapper.find('.delete-dialog .btn').trigger('click');
     
     expect(deleteNote).not.toHaveBeenCalled();
