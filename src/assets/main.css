@@ -69,6 +69,17 @@ body {
   color: var(--bg);
 }
 
+.btn-delete {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-delete:hover {
+  background: var(--danger);
+  color: var(--bg);
+}
+
 .btn-small {
   padding: 4px 8px;
   font-size: 12px;

@@ -61,11 +61,10 @@
                 @keydown.enter.prevent="blurTarget"
               >{{ item.name }}</span>
             </div>
-            <button @click.stop="confirmDeleteDivider(item.id)" class="btn btn-small btn-danger" title="Delete Divider">🗑️</button>
+            <button @click.stop="confirmDeleteDivider(item.id)" class="btn btn-small btn-delete" title="Delete Divider">🗑️</button>
           </template>
           <template v-else>
             <span class="drag-handle">⠿</span>
-            <span class="note-icon">📝</span>
             <span
               contenteditable
               class="note-title"
@@ -313,25 +312,10 @@ async function deleteDivider() {
   min-width: 0;
 }
 
-.note-icon {
-  font-size: 16px;
-  color: var(--fg-secondary);
-}
-
 .note-item .btn-small {
   border: none;
   padding: 4px;
   background: transparent;
-}
-
-.btn-danger {
-  background: var(--bg-danger, #fee);
-  border-color: var(--border-danger, #fcc);
-  color: var(--fg-danger, #c00);
-}
-
-.btn-danger:hover {
-  background: var(--bg-danger-hover, #fdd);
 }
 
 .delete-dialog {
